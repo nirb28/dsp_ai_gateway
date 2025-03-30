@@ -1,0 +1,113 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Python: Debug Tests",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "purpose": ["debug-test"],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}",
+                "OPENAI_API_KEY": "sk-test-key-for-openai",
+                "GROQ_API_KEY": "gsk-test-key-for-groq"
+            }
+        },
+        {
+            "name": "Python: Debug All Tests",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "-v",
+                "tests/"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}",
+                "OPENAI_API_KEY": "sk-test-key-for-openai",
+                "GROQ_API_KEY": "gsk-test-key-for-groq"
+            }
+        },
+        {
+            "name": "Python: Debug Current Test File",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "-v",
+                "${file}"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}",
+                "OPENAI_API_KEY": "sk-test-key-for-openai",
+                "GROQ_API_KEY": "gsk-test-key-for-groq"
+            }
+        },
+        {
+            "name": "Python: Debug Test Function",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "-v",
+                "${file}::${input:testClass}::${input:testFunction}"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}",
+                "OPENAI_API_KEY": "sk-test-key-for-openai",
+                "GROQ_API_KEY": "gsk-test-key-for-groq"
+            }
+        },
+        {
+            "name": "Python: Debug with PDB",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "-v",
+                "--no-header",
+                "-s",
+                "--pdb",
+                "${file}"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}",
+                "OPENAI_API_KEY": "sk-test-key-for-openai",
+                "GROQ_API_KEY": "gsk-test-key-for-groq"
+            }
+        }
+    ],
+    "inputs": [
+        {
+            "id": "testClass",
+            "type": "promptString",
+            "description": "Enter the test class name (e.g., TestModels)"
+        },
+        {
+            "id": "testFunction",
+            "type": "promptString",
+            "description": "Enter the test function name (e.g., test_openai_model)"
+        }
+    ]
+}

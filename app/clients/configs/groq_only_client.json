@@ -1,0 +1,15 @@
+{
+    "client_id": "groq_only_client",
+    "name": "Groq Only Client",
+    "allowed_providers": ["groq"],
+    "default_provider": "groq",
+    "default_model": "llama2-70b-4096",
+    "max_tokens_limit": 1500,
+    "rate_limit": {
+        "requests_per_minute": 45,
+        "tokens_per_day": 75000
+    },
+    "allowed_endpoints": ["generate"],
+    "created_at": "2025-03-16T20:20:00-04:00",
+    "updated_at": "2025-03-16T20:20:00-04:00"
+}
