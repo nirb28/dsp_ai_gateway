@@ -3,13 +3,15 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 import uvicorn
+import os
 
 from app.core.config import settings
 from app.api.endpoints import router as api_router
+from app.middleware.debug_middleware import DebugMiddleware
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.INFO if os.environ.get("LOG_LEVEL") != "DEBUG" else logging.DEBUG,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
@@ -29,6 +31,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add debug middleware (only in debug mode)
+if os.environ.get("LOG_LEVEL") == "DEBUG" or settings.DEBUG:
+    app.add_middleware(DebugMiddleware)
+    logger.info("Debug middleware enabled")
 
 # Include API router
 app.include_router(api_router, prefix=settings.API_V1_STR)
