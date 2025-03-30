@@ -33,7 +33,7 @@ app.add_middleware(
 )
 
 # Add debug middleware (only in debug mode)
-if os.environ.get("LOG_LEVEL") == "DEBUG" or settings.DEBUG:
+if os.environ.get("LOG_LEVEL") == "DEBUG":
     app.add_middleware(DebugMiddleware)
     logger.info("Debug middleware enabled")
 
