@@ -10,11 +10,6 @@ from app.schemas.base import ClientConfig
 # Configure logging
 logger = logging.getLogger(__name__)
 
-# Dictionary to store client secrets (in a production environment, this would be a secure database)
-CLIENT_SECRETS: Dict[str, str] = {
-    "test_client": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"  # sha256 of "password"
-}
-
 class ClientManager:
     """Manager for client authentication and configuration."""
     
@@ -73,23 +68,25 @@ class ClientManager:
         Raises:
             HTTPException: If authentication fails
         """
-        # Check if client exists
+        # Step 1: Check if client configuration exists
         if client_id not in self.clients:
-            logger.warning(f"Client not found: {client_id}")
+            logger.warning(f"Client configuration not found: {client_id}")
             raise HTTPException(status_code=401, detail="Invalid client credentials")
         
-        # Check if client secret is valid
-        if client_id not in CLIENT_SECRETS:
-            logger.warning(f"Client secret not found: {client_id}")
-            raise HTTPException(status_code=401, detail="Invalid client credentials")
+        client_config = self.clients[client_id]
         
-        # Hash the provided secret and compare with stored hash
+        # Step 2: Validate the provided secret
+        # Hash the provided secret
         hashed_secret = hashlib.sha256(client_secret.encode()).hexdigest()
-        if hashed_secret != CLIENT_SECRETS[client_id]:
-            logger.warning(f"Invalid client secret for client: {client_id}")
+        
+        # Check if the client has a secret hash and if the hashed secret matches
+        if not client_config.client_secret_hash or hashed_secret != client_config.client_secret_hash:
+            logger.warning(f"Invalid credentials provided for client: {client_id}")
             raise HTTPException(status_code=401, detail="Invalid client credentials")
         
-        return self.clients[client_id]
+        # Authentication successful
+        logger.debug(f"Client authenticated successfully: {client_id}")
+        return client_config
     
     def check_endpoint_permission(self, client_config: ClientConfig, endpoint: str) -> bool:
         """Check if a client has permission to access an endpoint.

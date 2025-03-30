@@ -1,6 +1,7 @@
 {
     "client_id": "test_client",
     "name": "Test Client",
+    "client_secret_hash": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
     "allowed_providers": ["openai", "groq"],
     "default_provider": "groq",
     "default_model": "mixtral-8x7b-32768",

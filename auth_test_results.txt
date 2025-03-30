@@ -1,0 +1,61 @@
+Authentication Test Results - 2025-03-30 17:50:30.331246
+
+================================================================================
+========================= CLIENT AUTHENTICATION DEBUG ==========================
+================================================================================
+
+Loaded clients:
+  - groq_only_client: Groq Only Client
+  - openai_only_client: OpenAI Only Client
+  - test_client: Test Client
+
+Registered secrets:
+  - test_client
+
+================================================================================
+================================ RUNNING TESTS =================================
+================================================================================
+
+================================================================================
+=================== TEST 1: Valid credentials (test_client) ====================
+================================================================================
+
+Testing authentication for client_id: 'test_client' with secret: 'password'
+Expected result: Success
+Authentication SUCCEEDED
+  Client name: Test Client
+  Allowed providers: ['openai', 'groq']
+
+[PASSED] Authentication Test
+
+================================================================================
+============================ TEST 2: Invalid secret ============================
+================================================================================
+
+Testing authentication for client_id: 'test_client' with secret: 'wrong_password'
+Expected result: Failure
+Authentication FAILED
+  Status code: 401
+  Detail: Invalid client credentials
+
+[PASSED] Authentication Test
+
+================================================================================
+========================= TEST 3: Non-existent client ==========================
+================================================================================
+
+Testing authentication for client_id: 'non_existent_client' with secret: 'password'
+Expected result: Failure
+Authentication FAILED
+  Status code: 401
+  Detail: Invalid client credentials
+
+[PASSED] Authentication Test
+
+================================================================================
+================================= TEST RESULTS =================================
+================================================================================
+
+Overall result: ALL TESTS PASSED
+
+Authentication testing complete.

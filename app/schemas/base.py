@@ -29,6 +29,7 @@ class ClientConfig(BaseModel):
     """Schema for client configuration."""
     client_id: str = Field(..., description="Client ID")
     name: str = Field(..., description="Client name")
+    client_secret_hash: Optional[str] = Field(None, description="Hashed client secret")
     allowed_providers: List[Literal["openai", "groq"]] = Field(..., description="List of allowed providers")
     default_provider: Literal["openai", "groq"] = Field(..., description="Default provider")
     default_model: str = Field(..., description="Default model")

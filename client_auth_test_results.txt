@@ -1,0 +1,45 @@
+Client Authentication Test Results - 2025-03-30 18:00:40.988912
+
+================================================================================
+================================ LOADED CLIENTS ================================
+================================================================================
+Client ID: groq_only_client
+  Name: Groq Only Client
+  Has secret hash: Yes
+  Secret hash: 6e7a8c580b1d8c0dd1bf4e02f0fbf9e38c846d1b5c2149c9e9c68186bf635f67
+  Allowed providers: ['groq']
+
+Client ID: openai_only_client
+  Name: OpenAI Only Client
+  Has secret hash: Yes
+  Secret hash: 3b7c03a7e828e8c70c7c4b9775c76d4f1b32e13c8f2a4de85e260542a1c6c0d8
+  Allowed providers: ['openai']
+
+Client ID: test_client
+  Name: Test Client
+  Has secret hash: Yes
+  Secret hash: 5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8
+  Allowed providers: ['openai', 'groq']
+
+
+================================================================================
+============================= AUTHENTICATION TESTS =============================
+================================================================================
+
+Test 1: Authentication with valid credentials
+  Client ID: test_client
+  Secret: password
+  Result: SUCCESS
+  Client name: Test Client
+  Allowed providers: ['openai', 'groq']
+
+Test 2: Authentication with invalid credentials
+  Client ID: test_client
+  Secret: wrong_password
+  Result: FAILED (expected)
+  Status code: 401
+  Detail: Invalid client credentials
+
+================================================================================
+================================ TEST COMPLETE =================================
+================================================================================

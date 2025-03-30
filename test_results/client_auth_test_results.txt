@@ -1,0 +1,108 @@
+Client Authentication Test Results - 2025-03-30 18:10:43.774247
+
+================================================================================
+================================ LOADED CLIENTS ================================
+================================================================================
+Client ID: groq_only_client
+  Name: Groq Only Client
+  Has secret hash: Yes
+  Secret hash: 3da8788fb01b9b408caeb9752019a8e4f6a1f0225bb0402167da71a2fa8bd5f0
+  Allowed providers: ['groq']
+
+Client ID: openai_only_client
+  Name: OpenAI Only Client
+  Has secret hash: Yes
+  Secret hash: cd210f36fc627e29753ae9e059f8d88c3ee9174634ed8eb115f059ac62a992f6
+  Allowed providers: ['openai']
+
+Client ID: test_client
+  Name: Test Client
+  Has secret hash: Yes
+  Secret hash: 5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8
+  Allowed providers: ['openai', 'groq']
+
+
+================================================================================
+============================= AUTHENTICATION TESTS =============================
+================================================================================
+
+================================================================================
+=================== TEST 1: Valid credentials (test_client) ====================
+================================================================================
+
+Testing authentication for client_id: 'test_client' with secret: 'password'
+Expected result: Success
+Authentication SUCCEEDED
+  Client name: Test Client
+  Allowed providers: ['openai', 'groq']
+Test PASSED
+
+================================================================================
+================== TEST 2: Invalid credentials (test_client) ===================
+================================================================================
+
+Testing authentication for client_id: 'test_client' with secret: 'wrong_password'
+Expected result: Failure
+Authentication FAILED
+  Error: 401: Invalid client credentials
+Test PASSED
+
+================================================================================
+================= TEST 3: Valid credentials (groq_only_client) =================
+================================================================================
+
+Testing authentication for client_id: 'groq_only_client' with secret: 'groq_password'
+Expected result: Success
+Authentication SUCCEEDED
+  Client name: Groq Only Client
+  Allowed providers: ['groq']
+Test PASSED
+
+================================================================================
+================ TEST 4: Invalid credentials (groq_only_client) ================
+================================================================================
+
+Testing authentication for client_id: 'groq_only_client' with secret: 'wrong_groq_password'
+Expected result: Failure
+Authentication FAILED
+  Error: 401: Invalid client credentials
+Test PASSED
+
+================================================================================
+================ TEST 5: Valid credentials (openai_only_client) ================
+================================================================================
+
+Testing authentication for client_id: 'openai_only_client' with secret: 'openai_password'
+Expected result: Success
+Authentication SUCCEEDED
+  Client name: OpenAI Only Client
+  Allowed providers: ['openai']
+Test PASSED
+
+================================================================================
+=============== TEST 6: Invalid credentials (openai_only_client) ===============
+================================================================================
+
+Testing authentication for client_id: 'openai_only_client' with secret: 'wrong_openai_password'
+Expected result: Failure
+Authentication FAILED
+  Error: 401: Invalid client credentials
+Test PASSED
+
+================================================================================
+========================= TEST 7: Non-existent client ==========================
+================================================================================
+
+Testing authentication for client_id: 'non_existent_client' with secret: 'password'
+Expected result: Failure
+Authentication FAILED
+  Error: 401: Invalid client credentials
+Test PASSED
+
+================================================================================
+================================= TEST RESULTS =================================
+================================================================================
+
+Overall result: ALL TESTS PASSED
+
+Authentication testing complete.

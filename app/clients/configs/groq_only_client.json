@@ -1,6 +1,7 @@
 {
     "client_id": "groq_only_client",
     "name": "Groq Only Client",
+    "client_secret_hash": "3da8788fb01b9b408caeb9752019a8e4f6a1f0225bb0402167da71a2fa8bd5f0",
     "allowed_providers": ["groq"],
     "default_provider": "groq",
     "default_model": "llama2-70b-4096",
