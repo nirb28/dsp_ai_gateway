@@ -1,0 +1,22 @@
+{
+    "client_id": "openai_only_client",
+    "name": "OpenAI Only Client",
+    "client_secret_hash": "cd210f36fc627e29753ae9e059f8d88c3ee9174634ed8eb115f059ac62a992f6",
+    "allowed_providers": [
+        "openai"
+    ],
+    "default_provider": "openai",
+    "default_model": "gpt-3.5-turbo",
+    "max_tokens_limit": 2000,
+    "rate_limit": {
+        "requests_per_minute": 60,
+        "tokens_per_day": 100000
+    },
+    "allowed_endpoints": [
+        "generate",
+        "clients/reload",
+        "health"
+    ],
+    "created_at": "2025-03-30T19:00:00-04:00",
+    "updated_at": "2025-03-30T19:00:00-04:00"
+}
