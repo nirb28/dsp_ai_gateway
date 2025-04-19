@@ -8,7 +8,53 @@ consumers:
       key-auth:
         key: consumer2-key
 
+services:           
+  - id: openai-chat-rewrite
+    upstream:
+      scheme: https
+      type: roundrobin
+      nodes:
+        - host: api.openai.com
+          port: 443
+          weight: 1
+    plugins:
+      proxy-rewrite:
+        headers:
+          set:
+            Authorization: Bearer <key>
+
+  - id: openai-ai-proxy
+    plugins:
+      ai-proxy:
+        provider: openai
+        auth:
+          header:
+            Authorization: Bearer <key>
+        model: "gpt-3.5-turbo"
+
 routes:
+  - uri: /v1/chat/completions
+    service_id: openai-chat-rewrite
+
+  - uri: /anything
+    upstream:
+      scheme: https
+      type: roundrobin
+      nodes:
+        somerandom.com:443: 1
+      pass_host: node
+    plugins:
+      ai-proxy:
+        auth:
+          header:
+            Authorization: Bearer <key>
+        model: 
+          provider: openai
+          name: "gpt-3.5-turbo"
+          options:
+            max_tokens: 512
+            temperature: 1.0
+
   - uri: /hello
     upstream:
       type: roundrobin
@@ -47,22 +93,4 @@ routes:
         whitelist:
           - dspai    
 
-services:
-  - name: OpenAI Service
-    routes:
-      - uris:
-          - /v1/chat/completions
-        name: openai-chat
-        plugins:
-          proxy-rewrite:
-            headers:
-              set:
-                Authorization: 
-    upstream:
-      scheme: https
-      type: roundrobin
-      nodes:
-        - host: api.openai.com
-          port: 443
-          weight: 1
 #END

@@ -1,3 +1,6 @@
+export admin_key=<admin>
+export OPENAI_API_KEY=<key>
+
 curl "http://127.0.0.1:9180/apisix/admin/services/" -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1'
 
 # Simple Example
@@ -89,4 +92,6 @@ curl -X PUT 'http://127.0.0.1:9180/apisix/admin/routes/5' \
       }
    }
 }'
+
+# Open AI 
 
