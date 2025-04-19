@@ -1,0 +1,13 @@
+name: ds_apisix_standalone
+services:
+  apisix:
+    image: apache/apisix:latest
+    volumes:
+      - ./conf/config.yaml:/usr/local/apisix/conf/config.yaml:ro
+      - ./conf/apisix.yaml:/usr/local/apisix/conf/apisix.yaml:ro
+      - ./dspai_plugins/:/usr/local/apisix/apisix/dspai_plugins/:ro
+
+    ports:
+      - "9080:9080"
+    environment:
+      - GATEWAY_PORT=9080
