@@ -1,3 +1,13 @@
+consumers:
+  - username: dspai
+    plugins:
+      key-auth:
+        key: dspai-key
+  - username: consumer2
+    plugins:
+      key-auth:
+        key: consumer2-key
+
 routes:
   - uri: /hello
     upstream:
@@ -20,15 +30,39 @@ routes:
       echo:
         before_body: "DSPAI - before the body modification: "
 
-consumers:
-  - username: johndoe
+  - uri: /get
+    upstream:
+      type: roundrobin
+      nodes:
+        "httpbin.org:80": 1
+      scheme: http
+      pass_host: node
+      timeout:
+        connect: 20
+        send: 20
+        read: 20
     plugins:
-      jwt-auth:
-        key: user-key
-        secret: my-secret-key
-      limit-count: 
-        count: 1
-        time_window: 30
-        rejected_code: 429
+      key-auth: {}
+      consumer-restriction:
+        whitelist:
+          - dspai    
 
+services:
+  - name: OpenAI Service
+    routes:
+      - uris:
+          - /v1/chat/completions
+        name: openai-chat
+        plugins:
+          proxy-rewrite:
+            headers:
+              set:
+                Authorization: 
+    upstream:
+      scheme: https
+      type: roundrobin
+      nodes:
+        - host: api.openai.com
+          port: 443
+          weight: 1
 #END

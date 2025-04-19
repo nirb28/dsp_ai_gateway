@@ -5,6 +5,7 @@ services:
     volumes:
       - ./conf/config.yaml:/usr/local/apisix/conf/config.yaml:ro
       - ./conf/apisix.yaml:/usr/local/apisix/conf/apisix.yaml:ro
+      - ./conf/debug.yaml:/usr/local/apisix/conf/debug.yaml:ro
       - ./dspai_plugins/:/usr/local/apisix/apisix/dspai_plugins/:ro
 
     ports:
