@@ -46,9 +46,11 @@ authentication:
       password: admin
     - username: user
       password: user
- 
+
 plugins:                          # plugin list (sorted in alphabetical order)
   - api-breaker
+  - ai-proxy
+  - traffic-split
   - authz-keycloak
   - basic-auth
   - batch-requests
@@ -92,4 +94,3 @@ plugins:                          # plugin list (sorted in alphabetical order)
   - wolf-rbac
   - zipkin
   - server-info
-  - traffic-split
