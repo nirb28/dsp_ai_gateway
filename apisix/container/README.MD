@@ -202,3 +202,34 @@ curl "http://127.0.0.1:9080/alibaba" -X POST \
       }
     ]
   }'
+
+
+# JWT Auth
+
+curl http://127.0.0.1:9180/apisix/admin/services/ct-dev -H "X-API-KEY: $admin_key" -X PUT -d '
+{
+    "plugins": {
+        "limit-count": {
+            "count": 2,
+            "time_window": 60,
+            "rejected_code": 503,
+            "key": "remote_addr"
+        }
+    },
+    "upstream": {
+        "type": "roundrobin",
+        "nodes": {
+          "192.168.1.25:8000": 1
+        }
+    }
+}'
+
+curl http://127.0.0.1:9180/apisix/admin/routes/rt-ct-dev \
+-H "X-API-KEY: $admin_key" -X PUT -d '
+{
+    "methods": ["GET"],
+    "uri": "/ct",
+    "service_id": "ct-dev"
+}'
+
+curl -i -X GET "http://localhost:9080/ct"
