@@ -6,6 +6,7 @@ services:
     restart: always
     volumes:
       - ./apisix_conf/config.yaml:/usr/local/apisix/conf/config.yaml:ro
+      - ./apisix_conf/debug.yaml:/usr/local/apisix/conf/debug.yaml:ro
       #- ./dspai_plugins/:/opt/apisix/dspai_plugins/:ro
     depends_on:
       - etcd

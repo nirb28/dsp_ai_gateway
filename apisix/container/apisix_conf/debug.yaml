@@ -1,0 +1,19 @@
+basic:
+  enable: true
+http_filter:
+  enable: false
+  enable_header_name: X-APISIX-Dynamic-Debug
+hook_conf:
+  enable: true
+  name: hook_phase
+  log_level: warn
+  is_print_input_args: true
+  is_print_return_value: true
+hook_phase:
+  apisix:
+    - http_access_phase
+    - http_header_filter_phase
+    - http_body_filter_phase
+    - http_log_phase
+
+#END

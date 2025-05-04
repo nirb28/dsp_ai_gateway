@@ -204,16 +204,21 @@ curl "http://127.0.0.1:9080/alibaba" -X POST \
   }'
 
 
-# JWT Auth
+# Rate Limit JWT Auth
 
 curl http://127.0.0.1:9180/apisix/admin/services/ct-dev -H "X-API-KEY: $admin_key" -X PUT -d '
 {
     "plugins": {
         "limit-count": {
-            "count": 2,
+            "count": 2000,
             "time_window": 60,
             "rejected_code": 503,
             "key": "remote_addr"
+        },
+        "jwt-auth": {
+            "key": "jack-key",
+            "secret": "jack-hs256-secretjack-hs256-secret",
+            "alg": "HS256"
         }
     },
     "upstream": {
@@ -232,4 +237,48 @@ curl http://127.0.0.1:9180/apisix/admin/routes/rt-ct-dev \
     "service_id": "ct-dev"
 }'
 
-curl -i -X GET "http://localhost:9080/ct"
+curl -i -X GET "http://localhost:9080/ct" -H 'Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJrZXkiOiJqYWNrLWtleSIsImV4cCI6OTk5OTk5OTk5OX0.-G1LK93voik7jQvYDsKB2UZYC320i_8kSLPNmxKPmLw'
+
+
+#JWT-2
+curl "http://127.0.0.1:9180/apisix/admin/consumers" -X PUT \
+  -H "X-API-KEY: ${admin_key}" \
+  -d '{
+    "username": "jack"
+  }'
+
+curl "http://127.0.0.1:9180/apisix/admin/consumers/jack/credentials" -X PUT \
+  -H "X-API-KEY: ${admin_key}" \
+  -d '{
+    "id": "cred-jack-jwt-auth",
+    "plugins": {
+      "jwt-auth": {
+        "key": "jack-key",
+        "secret": "jack-hs256-secretjack-hs256-secret"
+      }
+    }
+  }'
+
+curl "http://127.0.0.1:9180/apisix/admin/routes" -X PUT \
+  -H "X-API-KEY: ${admin_key}" \
+  -d '{
+    "id": "jwt-route",
+    "uri": "/headers1",
+    "plugins": {
+      "jwt-auth": {}
+    },
+    "upstream": {
+      "type": "roundrobin",
+      "nodes": {
+        "httpbin.org:80": 1
+      }
+    }
+  }'
+
+curl -i "http://127.0.0.1:9080/headers1" -H "Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJrZXkiOiJqYWNrLWtleSIsImV4cCI6OTk5OTk5OTk5OX0.-G1LK93voik7jQvYDsKB2UZYC320i_8kSLPNmxKPmLw"
+
+jwt.io: payload:
+{
+  "key": "jack-key",
+  "exp": 9999999999
+}
