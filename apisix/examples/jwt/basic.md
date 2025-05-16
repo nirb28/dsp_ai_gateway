@@ -12,13 +12,9 @@ curl "http://127.0.0.1:9180/apisix/admin/consumers" -X PUT -H "X-API-KEY: ${admi
         "rejected_code": 429
       },
       "jwt-auth": {
-          "key": "user-key",
+          "key": "ak_tiered_model_exec",
           "secret": "your-secret-key-here",
           "store_in_ctx": "true"
-      },
-      "proxy-rewrite": {
-            "uri": "/$http_destURL",
-            "host1":"$http_destHost"
       },
       "serverless-pre-function": {
           "phase": "rewrite",
@@ -36,22 +32,25 @@ curl "http://127.0.0.1:9180/apisix/admin/consumers" -X PUT -H "X-API-KEY: ${admi
                     -- Decode the JWT token
                     local jwt_obj = jwt:load_jwt(jwt_token_only)
                     if jwt_obj.valid then
-                      -- Retrieve the value of the speakerId claim from the JWT token
-                      local speakerId_claim_value = jwt_obj.payload.speakerId
-                      local destURL_claim_value = jwt_obj.payload.destURL
-                      local destHost_claim_value = jwt_obj.payload.destHost
+                      -- Retrieve the value of the user name and category claim from the JWT token
+                      local name_claim_value = jwt_obj.payload.name                      
+                      ngx.log(ngx.WARN, \"** DS - serverless pre function\" .. name_claim_value);
                       
-                      ngx.log(ngx.WARN, \"** DS - serverless pre function\" .. destURL_claim_value);
-
                       -- Store the speakerId claim value in the header variable
-                      core.request.set_header(ctx, \"speakerId\", speakerId_claim_value)
-                      core.request.set_header(ctx, \"destURL\", destURL_claim_value)
-                      core.request.set_header(ctx, \"destHost\", destHost_claim_value)
+                      core.request.set_header(ctx, \"name\", name_claim_value)
+                      core.request.set_header(ctx, \"usercategory\", jwt_obj.payload.user_category.category.name)
+                      core.request.set_header(ctx, \"destURL\", jwt_obj.payload.user_category.category.destURL)
                     end
                   end
               end
             end
-          "]}
+          "]
+      },
+      "proxy-rewrite": {
+        "use_real_request_uri_unsafe": true,
+        "uri": "/debug/request-info?user_category=$http_usercategory",
+        "host1":"$http_destHost"
+      }
     }
   }'
 
@@ -89,6 +88,6 @@ curl "http://127.0.0.1:9180/apisix/admin/routes/rt_jwt_route_basic" -X GET -H "X
 ## Execute route
 
 # jwt: 
-jwt_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJrZXkiOiJ1c2VyLWtleSIsImV4cCI6OTk5OTk5OTk5OSwic3BlYWtlcklkIjoxLCJkZXN0VVJMIjoiL2RlYnVnL3JlcXVlc3QtaW5mbyIsImRlc3RIb3N0IjoiMTkyLjE2OC4xLjI1OjUwMDAifQ.eKRGOt4NSIDhoO1C5REOuWaKmmhxxmvOsxJXTeqVnFM
-curl "http://127.0.0.1:9080/debug/dest-read-from-jwt" -i -H "Authorization: Bearer ${jwt_token}"
+jwt_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6dHJ1ZSwiaWF0IjoxNzQ3MzU4OTQ3LCJqdGkiOiIyNDQzNDg1NS0zMmQwLTQxNjMtOTc1OS05YmEwNGU5N2E4YWYiLCJ0eXBlIjoiYWNjZXNzIiwic3ViIjoiaGsiLCJuYmYiOjE3NDczNTg5NDcsImV4cCI6MTc0NzQ0NTM0NywibmFtZSI6IlJlZ3VsYXIgVXNlciIsImVtYWlsIjoidXNlcjFAZXhhbXBsZS5jb20iLCJncm91cHMiOlsidXNlcnMiLCJncnBfdGllcjEiXSwicm9sZXMiOlsidXNlciJdLCJrZXkiOiJha190aWVyZWRfbW9kZWxfZXhlYyIsIm1vZGVscyI6WyJncHQtMy41LXR1cmJvIiwiZ3B0LTQiXSwicmF0ZV9saW1pdCI6MjAwLCJ0aWVyIjoiZW50ZXJwcmlzZSIsInRlYW1fcGVybWlzc2lvbnMiOnsiY2FuX21hbmFnZV91c2VycyI6ZmFsc2UsImNhbl9jcmVhdGVfYXBpX2tleXMiOmZhbHNlLCJjYW5fdmlld19iaWxsaW5nIjpmYWxzZSwibWF4X21vZGVsc19wZXJfcmVxdWVzdCI6MX0sInVzZXJfY2F0ZWdvcnkiOnsiY2F0ZWdvcnkiOnsibmFtZSI6ImdvbGQiLCJncm91cHMiOlsiZ3JwX3RpZXIxIiwicG93ZXJ1c2VycyJdLCJ0aWVyIjozLCJkZXN0VVJMIjoiZGVidWcvcmVxdWVzdC1pbmZvP3VzZXJfY2F0ZWdvcnk9Z29sZCJ9LCJtYXRjaF9tb2RlIjoiVElFUkVEX01BVENIIn19.dFYWSzCDY-TgBCbqrceUmn9ISxSfwGInP_Gdtf62hn8
+curl "http://127.0.0.1:9080/debug/request-info" -i -H "Authorization: Bearer ${jwt_token}"
 
