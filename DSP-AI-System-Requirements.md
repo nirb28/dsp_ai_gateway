@@ -13,6 +13,7 @@ The DSP AI system is built on a modular architecture with the following key comp
 3. **DSP AI Control Tower**: Policy evaluation engine for governance and compliance
 4. **API Integration**: API gateway with request/response transformation to handle diverse model formats
 5. **DSP AI LangChain Integration**: Extension components for advanced LLM use cases
+6. **Apache OpenWhisk Integration**: Serverless architecture for scalable model deployment
 
 ### Overall System Requirements Met
 
@@ -28,6 +29,7 @@ The DSP AI system is built on a modular architecture with the following key comp
 | **Rate Limiting** | Per-client request and token limits | ✅ |
 | **Model Format Standardization** | Transformation between OpenAI and Triton formats | ✅ |
 | **Dynamic Authorization Claims** | Function and API-based dynamic claim generation | ✅ |
+| **Serverless Deployment** | Apache Whisk integration for on-demand scaling | 🔄 |
 
 ## Detailed Component Analysis
 
@@ -115,6 +117,23 @@ The DSP AI system is built on a modular architecture with the following key comp
 - **Memory Systems**: Support for conversation memory and context
 - **Tool Integration**: Ability to use LLMs with external tools
 
+### 6. Apache Whisk Integration (Planned)
+
+**Description**: Integration with Apache Whisk for serverless deployment of AI models and workflows.
+
+**Key Requirements to be Met**:
+- **Serverless Model Deployment**: On-demand scaling of model inference endpoints
+- **Event-Driven Processing**: Trigger model execution based on events
+- **Resource Optimization**: Automatic scaling up/down based on demand
+- **Cold Start Optimization**: Techniques to minimize cold start latency for LLM inference
+- **Multi-Runtime Support**: Support for Python, Node.js, and other runtimes for flexible model serving
+
+**Implementation Plan**:
+- Container-based deployment of models as Whisk actions
+- Integration with existing authentication mechanisms
+- Custom runtime for optimized LLM serving
+- Monitoring and observability integration
+
 ## Integration Points
 
 The system components integrate at the following key points:
@@ -162,6 +181,8 @@ The system components integrate at the following key points:
 3. **Advanced Caching**: Implement response caching for common requests
 4. **Fine-grained Permission System**: Enhance policy controls for more detailed access management
 5. **Integration with Enterprise Security Systems**: Further integrate with SSO and IAM solutions
+6. **Serverless Workflow Orchestration**: Build complex AI workflows using Apache Whisk composition
+7. **Edge Deployment Support**: Enable model deployment to edge devices using lightweight containers
 
 ## Conclusion
 
