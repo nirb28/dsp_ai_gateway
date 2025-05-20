@@ -1,11 +1,6 @@
 # APISIX: Multi-Model OpenAI to Triton Transformer
 
-This configuration demonstrates how to transform OpenAI API requests to Triton Server format with multi-model support.
-
 ## Create the Route
-
-```bash
-# Create the transformation route
 curl http://localhost:9180/apisix/admin/routes/openai_triton_proxy \
   -H "X-API-KEY: ${admin_key}" \
   -H "Content-Type: application/json" \
@@ -198,12 +193,12 @@ curl http://localhost:9180/apisix/admin/routes/openai_triton_proxy \
                 raw_text = triton_resp.outputs[1].data[1]
             end
             
-            -- Extract only the assistant's response
-            core.log.info(\"[3.5] Extracting assistant's response from raw text\")
+            -- Extract only the assistants response
+            core.log.info(\"[3.5] Extracting assistants response from raw text\")
             core.log.info(\"[3.6] Raw text: \" .. (raw_text and raw_text:sub(1, 100) or \"nil\") .. \"...\")
             
             if raw_text then
-                -- Find the assistant's part
+                -- Find the assistants part
                 local assistant_marker = \"<|start_header_id|>assistant<|end_header_id|>\"
                 local _, assistant_start = string.find(raw_text, assistant_marker)
                 
@@ -273,19 +268,18 @@ curl http://localhost:9180/apisix/admin/routes/openai_triton_proxy \
     },
     "upstream": {
       "type": "chash",
-      "key": "$http_x_use_70b_server",
+      "key": "http_x_use_70b_server",
       "nodes": {
         "192.168.1.25:5001": 1,
         "192.168.1.26:5001": 1
       }
     }
   }'
-```
+
 
 ## Test the Route with Different Models
 
 ### Test with 8B Model (Default)
-```bash
 curl -X POST http://localhost:9080/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
@@ -295,10 +289,8 @@ curl -X POST http://localhost:9080/v1/chat/completions \
     ],
     "temperature": 0.7
   }'
-```
 
 ### Test with 70B Model
-```bash
 curl -X POST http://localhost:9080/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
@@ -309,16 +301,6 @@ curl -X POST http://localhost:9080/v1/chat/completions \
     ],
     "temperature": 0.7
   }'
-```
-
-
-
-## Debugging
-
-To check APISIX logs:
-```bash
-tail -f /usr/local/apisix/logs/error.log
-```
 
 ### Directly Test the Mock Service
 
