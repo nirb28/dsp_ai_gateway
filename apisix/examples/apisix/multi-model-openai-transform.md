@@ -1,7 +1,10 @@
-# APISIX: OpenAI API to Triton Inference Server Transformer
+# APISIX: Multi-Model OpenAI to Triton Transformer
+
+This configuration demonstrates how to transform OpenAI API requests to Triton Server format with multi-model support.
 
 ## Create the Route
 
+```bash
 # Create the transformation route
 curl http://localhost:9180/apisix/admin/routes/openai_triton_proxy \
   -H "X-API-KEY: ${admin_key}" \
@@ -39,6 +42,7 @@ curl http://localhost:9180/apisix/admin/routes/openai_triton_proxy \
             
             core.log.info(\"[1.3] OpenAI request: \", cjson.encode(data))
             
+            -- Basic validation
             if not data.messages then
                 core.log.error(\"[1.4] Messages field missing in request\")
                 return 400, {error = \"Invalid request format: missing messages\"}
@@ -66,8 +70,36 @@ curl http://localhost:9180/apisix/admin/routes/openai_triton_proxy \
                 system_prompt, user_prompt
             )
             
+            -- Model selection logic
+            core.log.info(\"==== [4] Model selection ====\")
+            local model_name = \"Meta-Llama-3.1-8B-Instruct\"  -- Default model
+            
+            -- Set upstream based on model selection
+            local use_70b = false
+            
+            -- Check for model parameter in the request
+            if data.model then
+                -- Direct model selection based on model name
+                if data.model == \"llama-3-70b\" or data.model:find(\"70[Bb]\") then
+                    model_name = \"Meta-Llama-3.1-70B-Instruct\"
+                    use_70b = true
+                    core.log.info(\"[4.1] Selected 70B Llama model with 70B server\")
+                elseif data.model == \"llama-3-8b\" or data.model:find(\"8[Bb]\") then
+                    model_name = \"Meta-Llama-3.1-8B-Instruct\"
+                    use_70b = false
+                    core.log.info(\"[4.2] Selected 8B Llama model with 8B server\")
+                else
+                    -- Keep default if model name is not recognized
+                    core.log.info(\"[4.3] Using default 8B model (unrecognized model name)\")
+                end
+            end
+            
+            -- Set a custom header to be used for upstream selection
+            ngx.req.set_header(\"X-Use-70B-Server\", tostring(use_70b))
+            core.log.info(\"[4.4] Set X-Use-70B-Server header to: \" .. tostring(use_70b))
+            
             -- Build Triton request using simplified format
-            core.log.info(\"==== [4] Building Triton request ====\")
+            core.log.info(\"==== [5] Building Triton request ====\")
             local triton_request = {
                 text_input = prompt,
                 parameters = {
@@ -78,20 +110,21 @@ curl http://localhost:9180/apisix/admin/routes/openai_triton_proxy \
                 }
             }
             
-            core.log.info(\"[4.1] Triton request: \", cjson.encode(triton_request))
+            core.log.info(\"[5.1] Triton request: \", cjson.encode(triton_request))
             
             -- Modify request for Triton
-            core.log.info(\"==== [5] Setting upstream and headers ====\")
-            ngx.var.upstream_uri = \"/v2/models/Meta-Llama-3.1-8B-Instruct/generate\"
-            core.log.info(\"[5.1] Set upstream URI: \", ngx.var.upstream_uri)
+            core.log.info(\"==== [6] Setting upstream and headers ====\")
+            local target_uri = \"/v2/models/\" .. model_name .. \"/generate\"
+            ngx.var.upstream_uri = target_uri
+            core.log.info(\"[6.1] Set upstream URI: \", target_uri)
             
             ngx.req.set_header(\"Content-Type\", \"application/json\")
-            core.log.info(\"[5.2] Set Content-Type header\")
+            core.log.info(\"[6.2] Set Content-Type header\")
             
             local req_body = cjson.encode(triton_request)
             ngx.req.set_body_data(req_body)
-            core.log.info(\"[5.3] Request body set, length: \", #req_body)
-            core.log.info(\"==== [6] Request transformation complete ====\")
+            core.log.info(\"[6.3] Request body set, length: \", #req_body)
+            core.log.info(\"==== [7] Request transformation complete ====\")
           end"
         ]
       },
@@ -156,38 +189,53 @@ curl http://localhost:9180/apisix/admin/routes/openai_triton_proxy \
                 raw_text = triton_resp.outputs[1].data[1]
             end
             
-            if not raw_text then
+            -- Extract only the assistant's response
+            core.log.info(\"[3.5] Extracting assistant's response from raw text\")
+            core.log.info(\"[3.6] Raw text: \" .. (raw_text and raw_text:sub(1, 100) or \"nil\") .. \"...\")
+            
+            if raw_text then
+                -- Find the assistant's part
+                local assistant_marker = \"<|start_header_id|>assistant<|end_header_id|>\"
+                local _, assistant_start = string.find(raw_text, assistant_marker)
+                
+                if assistant_start then
+                    -- Extract everything after the assistant marker
+                    generated_text = string.sub(raw_text, assistant_start + 1)
+                    core.log.info(\"[3.7] Extracted assistant response: \" .. generated_text:sub(1, 50) .. \"...\")
+                else
+                    -- Fallback if marker not found
+                    core.log.warn(\"[3.8] Assistant marker not found, using full text\")
+                    generated_text = raw_text
+                end
+            end
+            
+            if not generated_text then
                 core.log.error(\"[3.5] Could not find text in response: \", cjson.encode(triton_resp))
                 ngx.arg[1] = cjson.encode({error = \"Invalid model response format\"})
                 return
             end
             
-            -- Extract only the assistant's response
-            core.log.info(\"==== [4] Extracting clean assistant response ====\")
-            core.log.info(\"[4.1] Raw text from model: \" .. raw_text:sub(1, 100) .. \"...\")
+            core.log.info(\"[3.6] Extracted text: \", generated_text:sub(1, 50), \"...\")
             
-            -- Find the assistant's part using the marker
-            local assistant_marker = \"<|start_header_id|>assistant<|end_header_id|>\"
-            local _, assistant_start = string.find(raw_text, assistant_marker)
-            
-            if assistant_start then
-                -- Extract everything after the assistant marker
-                generated_text = string.sub(raw_text, assistant_start + 1)
-                core.log.info(\"[4.2] Found assistant marker at position: \" .. tostring(assistant_start))
-                core.log.info(\"[4.3] Extracted assistant response: \" .. generated_text:sub(1, 50) .. \"...\")
-            else
-                -- Fallback if marker not found
-                core.log.warn(\"[4.4] Assistant marker not found, using full text\")
-                generated_text = raw_text
+            -- Determine model name (extract from request URI)
+            local model_name = \"llama-proxy\"
+            local uri = ngx.var.upstream_uri
+            if uri then
+                local pattern = \"/v2/models/([^/]+)/generate\"
+                local match = string.match(uri, pattern)
+                if match then
+                    model_name = match
+                    core.log.info(\"[3.7] Extracted model name from URI: \", model_name)
+                end
             end
             
             -- Create OpenAI-style response
-            core.log.info(\"==== [5] Building OpenAI response ====\")
+            core.log.info(\"==== [4] Building OpenAI response ====\")
             local openai_resp = {
                 id = \"chatcmpl-\" .. ngx.time(),
                 object = \"chat.completion\",
                 created = ngx.time(),
-                model = \"llama-proxy\",
+                model = model_name,
                 choices = {
                     {
                         index = 0,
@@ -215,17 +263,20 @@ curl http://localhost:9180/apisix/admin/routes/openai_triton_proxy \
       }
     },
     "upstream": {
-      "type": "roundrobin",
+      "type": "chash",
+      "key": "$http_x_use_70b_server",
       "nodes": {
-        "192.168.1.25:5001": 1
+        "192.168.1.25:5001": 1,
+        "192.168.1.26:5001": 1
       }
     }
   }'
+```
 
-## Verify the route is properly created:
-curl http://localhost:9180/apisix/admin/routes/openai_triton_proxy -H "X-API-KEY: ${admin_key}"
+## Test the Route with Different Models
 
-## Test the Route
+### Test with 8B Model (Default)
+```bash
 curl -X POST http://localhost:9080/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
@@ -235,3 +286,59 @@ curl -X POST http://localhost:9080/v1/chat/completions \
     ],
     "temperature": 0.7
   }'
+```
+
+### Test with 70B Model
+```bash
+curl -X POST http://localhost:9080/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "llama-3-70b",
+    "messages": [
+      {"role": "system", "content": "You are a helpful assistant"},
+      {"role": "user", "content": "What is the capital of France?"}
+    ],
+    "temperature": 0.7
+  }'
+```
+
+
+
+## Debugging
+
+To check APISIX logs:
+```bash
+tail -f /usr/local/apisix/logs/error.log
+```
+
+### Directly Test the Mock Service
+
+Using multi-model selection, you can verify that both models work correctly with the mock service:
+
+```bash
+# Test the 8B model
+curl -X POST http://192.168.1.25:5001/v2/models/Meta-Llama-3.1-8B-Instruct/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text_input": "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\nYou are a helpful assistant<|eot_id|>\n<|start_header_id|>user<|end_header_id|>\nWhat is the capital of France?<|eot_id|>\n<|start_header_id|>assistant<|end_header_id|>",
+    "parameters": {
+      "stream": false,
+      "temperature": 0.7,
+      "top_p": 0.95,
+      "max_tokens": 100
+    }
+  }'
+
+# Test the 70B model
+curl -X POST http://192.168.1.25:5001/v2/models/Meta-Llama-3.1-70B-Instruct/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text_input": "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\nYou are a helpful assistant<|eot_id|>\n<|start_header_id|>user<|end_header_id|>\nWhat is the capital of France?<|eot_id|>\n<|start_header_id|>assistant<|end_header_id|>",
+    "parameters": {
+      "stream": false,
+      "temperature": 0.7,
+      "top_p": 0.95,
+      "max_tokens": 100
+    }
+  }'
+```

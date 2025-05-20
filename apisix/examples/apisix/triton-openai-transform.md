@@ -1,5 +1,6 @@
 # APISIX: OpenAI API to Triton Inference Server Transformer
-
+## It assumes that we use the nvidia spec of request. However we
+## are using a simplified response that is used in other examples
 ## Create the Route
 
 # Create the transformation route
