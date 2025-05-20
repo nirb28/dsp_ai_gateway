@@ -110,18 +110,19 @@ curl http://localhost:9180/apisix/admin/routes/openai_triton_proxy \
             local chunk = ngx.arg[1]
             local is_last = ngx.arg[2]
             
-            -- Skip empty chunks or if not the last chunk
-            if not chunk or chunk == \"\" then
-                core.log.info(\"[1.1] Empty chunk received, skipping\")
-                return
-            end
+            -- Debug the current state
+            core.log.info(\"[1.1] Body filter received: chunk_length=\" .. (chunk and #chunk or 0) .. \", is_last=\" .. tostring(is_last))
             
+            -- Only process when we have content AND it's the last chunk
+            -- We check is_last first to avoid unnecessary checks
             if not is_last then
-                core.log.info(\"[1.2] Not the last chunk, skipping\")
+                core.log.info(\"[1.2] Not the last chunk, buffering\")
                 return
             end
             
-            core.log.info(\"[1.3] Processing final response chunk, length: \", #chunk)
+            -- We have the last chunk, so proceed regardless of chunk content
+            -- If chunk is empty, we might still need to process any previously buffered content
+            core.log.info(\"[1.3] Processing final response chunk, length: \" .. (chunk and #chunk or 0))
             
             -- Parse response
             core.log.info(\"==== [2] Parsing Triton response ====\")
