@@ -89,9 +89,12 @@ curl http://localhost:9180/apisix/admin/routes/openai_triton_proxy \
                 end
             end
             
-            -- Set a custom header to be used for upstream selection
-            ngx.req.set_header(\"X-Use-70B-Server\", tostring(use_70b))
-            core.log.info(\"[4.4] Set X-Use-70B-Server header to: \" .. tostring(use_70b))
+            -- Set a query parameter to be used for upstream selection
+            -- We'll modify the current query string to add our parameter
+            local args = ngx.req.get_uri_args()
+            args["use_70b"] = tostring(use_70b)
+            ngx.req.set_uri_args(args)
+            core.log.info("[4.4] Set use_70b query parameter to: " .. tostring(use_70b))
             
             -- Build Triton request using simplified format
             core.log.info(\"==== [5] Building Triton request ====\")
@@ -268,7 +271,7 @@ curl http://localhost:9180/apisix/admin/routes/openai_triton_proxy \
     },
     "upstream": {
       "type": "chash",
-      "key": "http_x_use_70b_server",
+      "key": "arg_use_70b",
       "nodes": {
         "192.168.1.25:5001": 1,
         "192.168.1.26:5001": 1
