@@ -110,25 +110,33 @@ curl http://localhost:9180/apisix/admin/routes/openai_triton_proxy \
             local chunk = ngx.arg[1]
             local is_last = ngx.arg[2]
             
+            -- Get the context table to store our buffered data between calls
+            ctx.response_buffer = ctx.response_buffer or \"\"
+            
             -- Debug the current state
             core.log.info(\"[1.1] Body filter received: chunk_length=\" .. (chunk and #chunk or 0) .. \", is_last=\" .. tostring(is_last))
             
-            -- Only process when we have content AND it's the last chunk
-            -- We check is_last first to avoid unnecessary checks
+            if chunk and #chunk > 0 then
+                -- Append this chunk to our buffer
+                ctx.response_buffer = ctx.response_buffer .. chunk
+                core.log.info(\"[1.2] Added chunk to buffer, new buffer length: \" .. #ctx.response_buffer)
+            end
+            
+            -- Only continue processing if this is the last chunk
             if not is_last then
-                core.log.info(\"[1.2] Not the last chunk, buffering\")
+                core.log.info(\"[1.3] Not the last chunk, waiting for more\")
+                ngx.arg[1] = nil  -- Remove this chunk from the response
                 return
             end
             
-            -- We have the last chunk, so proceed regardless of chunk content
-            -- If chunk is empty, we might still need to process any previously buffered content
-            core.log.info(\"[1.3] Processing final response chunk, length: \" .. (chunk and #chunk or 0))
+            -- We have the complete response, now process it
+            core.log.info(\"[1.4] Processing complete response, buffer length: \" .. #ctx.response_buffer)
             
             -- Parse response
             core.log.info(\"==== [2] Parsing Triton response ====\")
-            local ok, triton_resp = pcall(cjson.decode, chunk)
+            local ok, triton_resp = pcall(cjson.decode, ctx.response_buffer)
             if not ok then
-                core.log.error(\"[2.1] Failed to decode response: \", chunk)
+                core.log.error(\"[2.1] Failed to decode response: \" .. ctx.response_buffer:sub(1, 100) .. \"...\")
                 ngx.arg[1] = cjson.encode({error = \"Failed to decode model response\"})
                 return
             end
