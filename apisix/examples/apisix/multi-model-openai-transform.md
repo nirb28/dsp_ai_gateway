@@ -90,9 +90,9 @@ curl http://localhost:9180/apisix/admin/routes/multi_model_openai_triton_proxy \
             end
             
             -- Set a query parameter to be used for upstream selection
-            -- We'll modify the current query string to add our parameter
+            -- We will modify the current query string to add our parameter
             local args = ngx.req.get_uri_args()
-            args["use_70b"] = tostring(use_70b)
+            args[\"use_70b\"] = tostring(use_70b)
             ngx.req.set_uri_args(args)
             core.log.info(\"[4.4] Set use_70b query parameter to: \" .. tostring(use_70b))
             
@@ -202,11 +202,11 @@ curl http://localhost:9180/apisix/admin/routes/multi_model_openai_triton_proxy \
                 return
             end
             
-            -- Extract only the assistant\'s response
+            -- Extract only the assistants response
             core.log.info(\"==== [4] Extracting clean assistant response ====\")
             core.log.info(\"[4.1] Raw text from model: \" .. (raw_text and raw_text:sub(1, 100) or \"nil\") .. \"...\")
             
-            -- Find the assistant\'s part using the marker
+            -- Find the assistants part using the marker
             local assistant_marker = \"<|start_header_id|>assistant<|end_header_id|>\"
             local _, assistant_start = string.find(raw_text, assistant_marker)
             
