@@ -1,7 +1,7 @@
 # APISIX: Multi-Model OpenAI to Triton Transformer
 
 ## Create the Route
-curl http://localhost:9180/apisix/admin/routes/openai_triton_proxy \
+curl http://localhost:9180/apisix/admin/routes/multi_model_openai_triton_proxy \
   -H "X-API-KEY: ${admin_key}" \
   -H "Content-Type: application/json" \
   -X PUT \
@@ -94,7 +94,7 @@ curl http://localhost:9180/apisix/admin/routes/openai_triton_proxy \
             local args = ngx.req.get_uri_args()
             args["use_70b"] = tostring(use_70b)
             ngx.req.set_uri_args(args)
-            core.log.info("[4.4] Set use_70b query parameter to: " .. tostring(use_70b))
+            core.log.info(\"[4.4] Set use_70b query parameter to: \" .. tostring(use_70b))
             
             -- Build Triton request using simplified format
             core.log.info(\"==== [5] Building Triton request ====\")
@@ -196,33 +196,30 @@ curl http://localhost:9180/apisix/admin/routes/openai_triton_proxy \
                 raw_text = triton_resp.outputs[1].data[1]
             end
             
-            -- Extract only the assistants response
-            core.log.info(\"[3.5] Extracting assistants response from raw text\")
-            core.log.info(\"[3.6] Raw text: \" .. (raw_text and raw_text:sub(1, 100) or \"nil\") .. \"...\")
-            
-            if raw_text then
-                -- Find the assistants part
-                local assistant_marker = \"<|start_header_id|>assistant<|end_header_id|>\"
-                local _, assistant_start = string.find(raw_text, assistant_marker)
-                
-                if assistant_start then
-                    -- Extract everything after the assistant marker
-                    generated_text = string.sub(raw_text, assistant_start + 1)
-                    core.log.info(\"[3.7] Extracted assistant response: \" .. generated_text:sub(1, 50) .. \"...\")
-                else
-                    -- Fallback if marker not found
-                    core.log.warn(\"[3.8] Assistant marker not found, using full text\")
-                    generated_text = raw_text
-                end
-            end
-            
-            if not generated_text then
+            if not raw_text then
                 core.log.error(\"[3.5] Could not find text in response: \", cjson.encode(triton_resp))
                 ngx.arg[1] = cjson.encode({error = \"Invalid model response format\"})
                 return
             end
             
-            core.log.info(\"[3.6] Extracted text: \", generated_text:sub(1, 50), \"...\")
+            -- Extract only the assistant\'s response
+            core.log.info(\"==== [4] Extracting clean assistant response ====\")
+            core.log.info(\"[4.1] Raw text from model: \" .. (raw_text and raw_text:sub(1, 100) or \"nil\") .. \"...\")
+            
+            -- Find the assistant\'s part using the marker
+            local assistant_marker = \"<|start_header_id|>assistant<|end_header_id|>\"
+            local _, assistant_start = string.find(raw_text, assistant_marker)
+            
+            if assistant_start then
+                -- Extract everything after the assistant marker
+                generated_text = string.sub(raw_text, assistant_start + 1)
+                core.log.info(\"[4.2] Found assistant marker at position: \" .. tostring(assistant_start))
+                core.log.info(\"[4.3] Extracted assistant response: \" .. generated_text:sub(1, 50) .. \"...\")
+            else
+                -- Fallback if marker not found
+                core.log.warn(\"[4.4] Assistant marker not found, using full text\")
+                generated_text = raw_text
+            end
             
             -- Determine model name (extract from request URI)
             local model_name = \"llama-proxy\"
@@ -232,12 +229,12 @@ curl http://localhost:9180/apisix/admin/routes/openai_triton_proxy \
                 local match = string.match(uri, pattern)
                 if match then
                     model_name = match
-                    core.log.info(\"[3.7] Extracted model name from URI: \", model_name)
+                    core.log.info(\"[4.5] Extracted model name from URI: \", model_name)
                 end
             end
             
             -- Create OpenAI-style response
-            core.log.info(\"==== [4] Building OpenAI response ====\")
+            core.log.info(\"==== [5] Building OpenAI response ====\")
             local openai_resp = {
                 id = \"chatcmpl-\" .. ngx.time(),
                 object = \"chat.completion\",
@@ -261,10 +258,10 @@ curl http://localhost:9180/apisix/admin/routes/openai_triton_proxy \
             }
             
             -- Return transformed response
-            core.log.info(\"[4.1] OpenAI response built successfully\")
+            core.log.info(\"[5.1] OpenAI response built successfully\")
             local resp_json = cjson.encode(openai_resp)
             ngx.arg[1] = resp_json
-            core.log.info(\"[4.2] Response transformation complete, length: \", #resp_json)
+            core.log.info(\"[5.2] Response transformation complete, length: \", #resp_json)
           end"
         ]
       }
@@ -279,6 +276,8 @@ curl http://localhost:9180/apisix/admin/routes/openai_triton_proxy \
     }
   }'
 
+## Verify the route is properly created:
+curl http://localhost:9180/apisix/admin/routes/multi_model_openai_triton_proxy -H "X-API-KEY: ${admin_key}"
 
 ## Test the Route with Different Models
 
