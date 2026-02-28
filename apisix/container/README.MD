@@ -13,8 +13,8 @@ curl "http://127.0.0.1:9180/apisix/admin/plugins/list" -X GET -H "X-API-KEY: ${a
 
 curl -i "http://127.0.0.1:9180/apisix/admin/routes" -H "X-API-KEY: edd1c9f034335f136f87ad84b625c8f1" -X PUT -d '
 {
-"id": "getting-started-ip",
-"uri": "/ip",
+"id": "mf-getting-started-ip",
+"uri": "/ip1",
 "upstream": {
 "type": "roundrobin",
 "nodes": {
@@ -24,6 +24,29 @@ curl -i "http://127.0.0.1:9180/apisix/admin/routes" -H "X-API-KEY: edd1c9f034335
 }'
 
 curl -i -X GET "http://localhost:9080/ip"
+
+# Httpbin Passthrough
+
+curl -i "http://127.0.0.1:9180/apisix/admin/routes" \
+  -H "X-API-KEY: ${admin_key}" -X PUT -d '
+{
+  "id": "httpbin-passthrough",
+  "uri": "/httpbin/*",
+  "plugins": {
+    "proxy-rewrite": {
+      "regex_uri": ["^/httpbin/(.*)$", "/$1"]
+    }
+  },
+  "upstream": {
+    "type": "roundrobin",
+    "pass_host": "pass",
+    "nodes": {
+      "httpbin.org:80": 1
+    }
+  }
+}'
+
+curl -i "http://127.0.0.1:9080/httpbin/get?foo=bar" -H "X-Test: passthrough"
 
 curl "http://127.0.0.1:9180/apisix/admin/upstreams/3" -H "X-API-KEY: edd1c9f034335f136f87ad84b625c8f1" -X PUT -d '
 {
@@ -281,3 +304,13 @@ jwt.io: payload:
 "exp": 9999999999
 }
 
+# Prometheus Plugin
+curl -i "http://127.0.0.1:9180/apisix/admin/global_rules/1" \
+  -H "X-API-KEY: edd1c9f034335f136f87ad84b625c8f1" \
+  -X PUT -d '{
+    "plugins": {
+      "prometheus": {}
+    }
+  }'
+
+  

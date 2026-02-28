@@ -45,11 +45,35 @@ services:
     - "9000:9000"
     networks:
       apisix:
- 
+
+  prometheus:
+    image: prom/prometheus:latest
+    restart: always
+    volumes:
+      - ./prometheus_conf/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    networks:
+      apisix:
+
+  grafana:
+    image: grafana/grafana:latest
+    restart: always
+    volumes:
+      - ./grafana_conf/config/grafana.ini:/etc/grafana/grafana.ini:ro
+      - ./grafana_conf/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana_conf/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      apisix:
+
 networks:
   apisix:
     driver: bridge
- 
+
 volumes:
   etcd_data:
     driver: local
